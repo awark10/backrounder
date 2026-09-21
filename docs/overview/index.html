@@ -203,6 +203,24 @@
   .dist-item p b { color: var(--text); }
   .dist-item code { background: var(--mono-bg); padding: 1px 5px; border-radius: 2px; font-size: 0.88em; color: var(--text); }
 
+  /* video card */
+  .video-grid { display: grid; grid-template-columns: 1fr; gap: 1px; background: var(--border); border: 1px solid var(--border); margin-top: 26px; max-width: 420px; }
+  .video-card { background: var(--surface); display: flex; flex-direction: column; text-decoration: none; color: inherit; }
+  .video-card .thumb { position: relative; aspect-ratio: 16/9; overflow: hidden; background: var(--mono-bg); }
+  .video-card .thumb img { width: 100%; height: 100%; object-fit: cover; display: block; filter: saturate(0.85); transition: filter .15s ease, transform .15s ease; }
+  .video-card:hover .thumb img { filter: saturate(1); transform: scale(1.03); }
+  .video-card .play { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; }
+  .video-card .play span {
+    width: 46px; height: 46px; border-radius: 50%; background: rgba(23,20,15,0.55);
+    display: flex; align-items: center; justify-content: center; backdrop-filter: blur(1px);
+  }
+  .video-card .play svg { width: 16px; height: 16px; fill: #f5f2ea; margin-left: 2px; }
+  .video-card .meta { padding: 14px 16px 16px; display: flex; flex-direction: column; gap: 6px; }
+  .video-card .kicker { font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; color: var(--accent); text-transform: uppercase; letter-spacing: 0.06em; }
+  .video-card h4 { font-family: 'IBM Plex Sans'; font-size: 14.5px; font-weight: 600; margin: 0; }
+  .video-card p { margin: 0; font-size: 13px; color: var(--text-muted); }
+  .video-card .link { font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; color: var(--accent); margin-top: 2px; }
+
   footer { border-top: 1px solid var(--border); margin-top: 48px; padding-block: 20px 40px; }
   footer p { margin: 0; font-size: 12.5px; color: var(--text-muted); font-family: 'IBM Plex Mono', monospace; }
 
@@ -228,6 +246,7 @@
       <a href="#ch-03" data-n="3">03 Import & Ownership</a>
       <a href="#ch-04" data-n="4">04 Quirks & Limits</a>
       <a href="#ch-05" data-n="5">05 Files & State</a>
+      <a href="#ch-06" data-n="6">06 Video</a>
     </nav>
   </div>
 </header>
@@ -466,6 +485,30 @@
           <tr><td><span class="status-dot limit"></span>Known gap</td><td>VRayBitmap / CoronaBitmap and other renderer-specific maps aren't relinked</td></tr>
         </tbody>
       </table>
+    </div>
+  </section>
+
+  <hr class="rule">
+
+  <!-- 06 -->
+  <section class="chapter" id="ch-06">
+    <span class="chnum">06</span>
+    <h2>Demo video</h2>
+    <p class="intro">A short walkthrough from the author's own channel, covering install and the import workflow.</p>
+
+    <div class="video-grid">
+      <a class="video-card" href="https://youtu.be/vq6oIuptf0w" target="_blank" rel="noopener noreferrer">
+        <div class="thumb">
+          <img src="thumb-backrounder-install.jpg" alt="Background Importer Script — video preview" loading="lazy">
+          <div class="play"><span><svg viewBox="0 0 24 24"><path d="M6 4l15 8-15 8z"/></svg></span></div>
+        </div>
+        <div class="meta">
+          <span class="kicker">Install &amp; usage</span>
+          <h4>Background Importer Script</h4>
+          <p>Installing the plugin and importing a backdrop into a scene from the gallery.</p>
+          <span class="link">youtu.be/vq6oIuptf0w ↗</span>
+        </div>
+      </a>
     </div>
   </section>
 
