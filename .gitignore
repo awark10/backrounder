@@ -1,0 +1,5 @@
+# The actual backdrop library: 13MB .max file + 56 source textures (~450MB).
+# Distributed via the .zip package, not tracked in git. Previews/ (small, 16:9
+# thumbnails) IS tracked -- this pattern only excludes root-level files.
+/Background_example.max
+/Background_*.png
