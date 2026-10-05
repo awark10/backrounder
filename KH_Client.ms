@@ -5,7 +5,7 @@
 
 (
     for asm in #("System.Net.Http", "System.Security", "System.Security.Cryptography.ProtectedData", \
-                 "System.IO.Compression", "System.IO.Compression.FileSystem") do
+                 "System.IO.Compression", "System.IO.Compression.FileSystem", "System.Web.Extensions") do
         try (dotNet.loadAssembly asm) catch ()
 )
 
@@ -123,7 +123,11 @@ struct BackrounderJSON (
 
 struct BackrounderKHClient (
     baseUrl = "https://www.kh-physicl.com",
-    folderId = "3d1e8a52-c530-4db5-b1af-7306c9a820d7", -- Library > Backplates > Exterior scene Backplates
+    -- Knowledge Hub folders shown in the gallery: #(label, folderId)
+    libraries = #(
+        #("Backgrounds", "3d1e8a52-c530-4db5-b1af-7306c9a820d7"), -- Library > Backplates > Exterior scene Backplates
+        #("Decals", "20f6b229-9912-4f83-b55f-55c30aef8a92")       -- Library > Decals
+    ),
     cacheDir = (getDir #userMacros) + "\\Backrounder_cache\\",
 
     cookies = undefined,
@@ -272,7 +276,37 @@ struct BackrounderKHClient (
     fn byTitle a b = stricmp a[1] b[1],
 
     -- /api/library/cards JSON -> sorted array of #(title, previewFileId, packageFileId)
+    -- .NET parser (System.Web.Extensions, always present with .NET Framework 4.8 in Max 2022).
+    -- The MAXScript reader is quadratic on long strings: ~1 min for the 105 decal cards.
+    fn parseCardsNet text = (
+        local js = dotNetObject "System.Web.Script.Serialization.JavaScriptSerializer"
+        js.MaxJsonLength = 2147483647
+        local root = js.DeserializeObject text
+        local items = #()
+        if not (root.ContainsKey "cards") do return items
+        fn field c key = (if c.ContainsKey key then c.Item[key] else undefined)
+        local raw = root.Item["cards"]
+        -- MAXScript may hand back a converted Array or the .NET object[] itself
+        local cards = if classOf raw == Array then raw else (for i = 0 to raw.Length - 1 collect raw.GetValue i)
+        for c in cards do (
+            if (field c "status") == "published" do (
+                local title = field c "title"
+                local dId = driveId (field c "downloadUrl")
+                if title != undefined and dId != undefined do
+                    append items #(title, driveId (field c "previewImageUrl"), dId)
+            )
+        )
+        qsort items byTitle
+        items
+    ),
+
     fn parseCards text = (
+        local fast = try (parseCardsNet text) catch (
+            format "Backrounder: .NET JSON parser unavailable, using the slow one: %
+" (getCurrentException())
+            undefined
+        )
+        if fast != undefined do return fast
         local items = #()
         local cards = json.get (json.parse text) "cards"
         if cards != undefined do for c in cards do (
@@ -288,7 +322,7 @@ struct BackrounderKHClient (
     ),
 
     -- Returns #(#ok, items) | #(#unauthorized, #()) | #(#error, #())
-    fn fetchBackgrounds = (
+    fn fetchCards folderId = (
         lastError = ""
         try (
             local resp = (client.GetAsync (baseUrl + "/api/library/cards?folderId=" + folderId)).Result

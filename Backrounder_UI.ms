@@ -4,6 +4,8 @@
 global BR_kh
 global BR_items = #() -- #(title, previewFileId, packageFileId)
 global BR_loginOk = false
+global BR_library -- index into BR_kh.libraries; kept between openings
+if BR_library == undefined do BR_library = 1
 global BR_mainRollout
 global BR_loginRollout
 
@@ -91,7 +93,7 @@ fn BR_importBackground item = (
     try (
         mergeMAXFile maxFile toMerge #select #autoRenameDups
     ) catch (
-        messageBox ("Error importing background:\n" + getCurrentException()) title:"Backrounder"
+        messageBox ("Error importing " + title + ":\n" +getCurrentException()) title:"Backrounder"
         return false
     )
     local objs = selection as array
@@ -154,12 +156,13 @@ fn BR_ensureLogin = (
     BR_loginOk
 )
 
--- Loads the list into BR_items, asking to sign in when the session is missing or expired
+-- Loads the current library into BR_items, asking to sign in when the session is missing or expired
 fn BR_loadLibrary = (
-    local r = BR_kh.fetchBackgrounds()
+    local folderId = BR_kh.libraries[BR_library][2]
+    local r = BR_kh.fetchCards folderId
     if r[1] == #unauthorized do (
         if not (BR_ensureLogin()) do return false
-        r = BR_kh.fetchBackgrounds()
+        r = BR_kh.fetchCards folderId
     )
     if r[1] != #ok do (
         messageBox ("Could not load the library:\n" + BR_kh.lastError) title:"Backrounder"
@@ -172,21 +175,31 @@ fn BR_loadLibrary = (
 -- ============================
 -- ROLLOUT: Main UI
 -- ============================
-rollout BR_mainRollout "Physicl Backgrounder v2.0" width:680 height:560
+rollout BR_mainRollout "Physicl Backgrounder v2.1" width:680 height:590
 (
+    label lblLibrary "Library:" pos:[20,12]
+    dropdownList ddlLibrary "" pos:[70,8] width:200
     group "Knowledge Hub Library" (
         dotNetControl lvBackgrounds "System.Windows.Forms.ListView" width:640 height:450 align:#center
     )
-    label lblStatus "" pos:[20,505] width:200
-    button btnRefresh "Refresh" pos:[20,522] width:80 height:26
-    button btnImport "IMPORT SELECTED" width:200 height:40 pos:[240,510]
-    button btnLogout "Sign out" pos:[580,522] width:80 height:26
+    label lblStatus "" pos:[20,535] width:200
+    button btnRefresh "Refresh" pos:[20,552] width:80 height:26
+    button btnImport "IMPORT SELECTED" width:200 height:40 pos:[240,540]
+    button btnLogout "Sign out" pos:[580,552] width:80 height:26
 
     fn makeThumb file = (
-        -- Read through a stream so the cached file is not locked while the dialog is open
+        -- Read through a stream so the cached file is not locked while the dialog is open.
+        -- Fit inside 160x90 keeping the aspect ratio (decals are mostly square, backgrounds wide).
         local fs = (dotNetClass "System.IO.File").OpenRead file
         local img = (dotNetClass "System.Drawing.Image").FromStream fs
-        local bmp = dotNetObject "System.Drawing.Bitmap" img 160 90
+        local bmp = dotNetObject "System.Drawing.Bitmap" 160 90
+        local gfx = (dotNetClass "System.Drawing.Graphics").FromImage bmp
+        gfx.Clear ((dotNetClass "System.Drawing.Color").FromArgb 40 40 40)
+        local s = amin (160.0 / img.Width) (90.0 / img.Height)
+        local w = (img.Width * s) as integer
+        local h = (img.Height * s) as integer
+        gfx.DrawImage img ((160 - w) / 2) ((90 - h) / 2) w h
+        gfx.Dispose()
         img.Dispose()
         fs.Close()
         bmp
@@ -207,7 +220,7 @@ rollout BR_mainRollout "Physicl Backgrounder v2.0" width:680 height:560
         imgList.ColorDepth = (dotNetClass "System.Windows.Forms.ColorDepth").Depth32Bit
         lvBackgrounds.LargeImageList = imgList
 
-        progressStart "Loading backgrounds from Knowledge Hub..."
+        progressStart ("Loading " + BR_kh.libraries[BR_library][1] + " from Knowledge Hub...")
         lvBackgrounds.BeginUpdate()
         for i = 1 to BR_items.count do (
             local item = BR_items[i]
@@ -223,12 +236,12 @@ rollout BR_mainRollout "Physicl Backgrounder v2.0" width:680 height:560
         )
         lvBackgrounds.EndUpdate()
         progressEnd()
-        lblStatus.text = (BR_items.count as string) + " backgrounds"
+        lblStatus.text = (BR_items.count as string) + " items"
     )
 
     fn importSelected = (
         if lvBackgrounds.SelectedItems.Count == 0 do (
-            messageBox "Please select a background first." title:"Info"
+            messageBox "Please select an item first." title:"Info"
             return false
         )
         local idx = (lvBackgrounds.SelectedItems.Item[0]).Index + 1
@@ -243,9 +256,19 @@ rollout BR_mainRollout "Physicl Backgrounder v2.0" width:680 height:560
         lvBackgrounds.BackColor = drawingColor.FromArgb 40 40 40
         lvBackgrounds.ForeColor = drawingColor.FromArgb 220 220 220
 
+        ddlLibrary.items = for l in BR_kh.libraries collect l[1]
+        ddlLibrary.selection = BR_library
         fillList()
     )
 
+    on ddlLibrary selected i do (
+        local prev = BR_library
+        BR_library = i
+        if BR_loadLibrary() then fillList() else (
+            BR_library = prev
+            ddlLibrary.selection = prev
+        )
+    )
     on btnRefresh pressed do (if BR_loadLibrary() do fillList())
     on btnImport pressed do importSelected()
     on lvBackgrounds DoubleClick s a do importSelected()
@@ -257,11 +280,11 @@ rollout BR_mainRollout "Physicl Backgrounder v2.0" width:680 height:560
 )
 
 fn BR_open = (
-    if BR_kh == undefined do (
-        BR_kh = BackrounderKHClient()
-        BR_kh.init()
-        BR_kh.loadSession()
-    )
+    -- A fresh client each time, so a reinstalled KH_Client.ms takes effect without restarting Max
+    BR_kh = BackrounderKHClient()
+    BR_kh.init()
+    BR_kh.loadSession()
+    if BR_library > BR_kh.libraries.count do BR_library = 1
     try (destroyDialog BR_mainRollout) catch ()
     if BR_loadLibrary() do createDialog BR_mainRollout
 )

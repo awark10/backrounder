@@ -25,7 +25,7 @@ Technical overview of the project: **[Claude Artifact](https://claude.ai/artifac
 - **Login:** `POST /api/auth/login` with email and password; the Hub answers with a Supabase
   session cookie. With "Remember me" the cookie is saved to `Backrounder_cache\session.dat`,
   encrypted per Windows user (DPAPI). The password is never stored.
-- **Library:** `GET /api/library/cards?folderId=…` (folder "Exterior scene Backplates") returns the
+- **Library:** `GET /api/library/cards?folderId=…` (folders "Exterior scene Backplates" and "Decals", picked in the dialog) returns the
   cards as JSON; only `published` cards are shown. An expired session shows the login dialog again.
 - **Thumbnails:** Drive's server-side thumbnail (`drive.google.com/thumbnail?id=…&sz=w320`, ~60 KB)
   instead of the full preview (up to 100 MB), cached in `Backrounder_cache\thumbs`.
@@ -43,4 +43,5 @@ toolbar. A Knowledge Hub account is required.
 
 ## Version
 
+v2.1 — adds the Decals library (switch at the top of the dialog) and a fast .NET JSON parser.
 v2.0 — Knowledge Hub login and library; v1.0 used a bundled local library.
