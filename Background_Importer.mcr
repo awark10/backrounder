@@ -1,7 +1,7 @@
 macroScript Backgrounder
 category:"Physicl"
-tooltip:"Import Backgrounds"
-buttontext:"BG Importer"
+tooltip:"Physicl Asset Browser: backplates and decals from the Knowledge Hub"
+buttontext:"Asset Browser"
 (
     -- KH_Client.ms and Backrounder_UI.ms are installed next to this macro in userMacros
     local dir = (getDir #userMacros) + "\\"

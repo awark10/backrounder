@@ -1,4 +1,4 @@
-# Backrounder
+# Physicl Asset Browser (Backrounder)
 
 A 3ds Max 2022 plugin that shows the **Knowledge Hub** (kh-physicl.com) backplate library as a
 browsable gallery inside Max. Sign in with your Hub account, pick a backdrop from the thumbnail
@@ -12,7 +12,7 @@ Technical overview of the project: **[Claude Artifact](https://claude.ai/artifac
 
 | File | Role |
 |---|---|
-| `Background_Importer.mcr` | macroScript (category `Physicl`, "BG Importer") — loads the two files below and opens the dialog |
+| `Background_Importer.mcr` | macroScript (category `Physicl`, "Asset Browser") — loads the two files below and opens the dialog |
 | `KH_Client.ms` | Knowledge Hub client — login, session cookie, card list, Drive downloads, cache, JSON reader |
 | `Backrounder_UI.ms` | Login dialog, gallery dialog, import (merge + texture copy & relink) |
 | `Run_Background_Importer.ms` | Installer — copies the three files into `userMacros`, reloads the macro live |
@@ -38,10 +38,11 @@ Technical overview of the project: **[Claude Artifact](https://claude.ai/artifac
 ## Installation
 
 Unzip the package and run `Run_Background_Importer.ms` via Scripting → Run Script. Then
-Customize → Customize User Interface → Toolbars → category `Physicl` → drag "BG Importer" to a
+Customize → Customize User Interface → Toolbars → category `Physicl` → drag "Asset Browser" to a
 toolbar. A Knowledge Hub account is required.
 
 ## Version
 
+v2.2 — renamed to Physicl Asset Browser; BACKPLATES/DECALS tabs, libraries kept in memory between tab switches, imported objects stay selected.
 v2.1 — adds the Decals library (switch at the top of the dialog) and a fast .NET JSON parser.
 v2.0 — Knowledge Hub login and library; v1.0 used a bundled local library.

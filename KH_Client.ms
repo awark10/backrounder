@@ -125,7 +125,7 @@ struct BackrounderKHClient (
     baseUrl = "https://www.kh-physicl.com",
     -- Knowledge Hub folders shown in the gallery: #(label, folderId)
     libraries = #(
-        #("Backgrounds", "3d1e8a52-c530-4db5-b1af-7306c9a820d7"), -- Library > Backplates > Exterior scene Backplates
+        #("Backplates", "3d1e8a52-c530-4db5-b1af-7306c9a820d7"), -- Library > Backplates > Exterior scene Backplates
         #("Decals", "20f6b229-9912-4f83-b55f-55c30aef8a92")       -- Library > Decals
     ),
     cacheDir = (getDir #userMacros) + "\\Backrounder_cache\\",

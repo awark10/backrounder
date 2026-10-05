@@ -7,6 +7,10 @@ global BR_loginOk = false
 global BR_library -- index into BR_kh.libraries; kept between openings
 if BR_library == undefined do BR_library = 1
 global BR_mainRollout
+-- Per library: #(items, ImageList). Filled on first visit, reused on tab switches and reopenings,
+-- rebuilt only by Refresh.
+global BR_cache
+if BR_cache == undefined do BR_cache = #()
 global BR_loginRollout
 
 -- ============================
@@ -105,6 +109,9 @@ fn BR_importBackground item = (
         for m in missing do msg += m + "\n"
         messageBox msg title:"Backrounder"
     )
+    -- Leave the imported object(s) selected so they can be placed right away
+    select (for o in objs where isValidNode o collect o)
+    completeRedraw()
     format "Backrounder: imported % (% objects)\n" title objs.count
     true
 )
@@ -156,8 +163,14 @@ fn BR_ensureLogin = (
     BR_loginOk
 )
 
--- Loads the current library into BR_items, asking to sign in when the session is missing or expired
-fn BR_loadLibrary = (
+-- Loads the current library into BR_items, asking to sign in when the session is missing or expired.
+-- Uses the in-memory copy unless force:true (Refresh).
+fn BR_loadLibrary force:false = (
+    local cached = BR_cache[BR_library]
+    if not force and cached != undefined do (
+        BR_items = cached[1]
+        return true
+    )
     local folderId = BR_kh.libraries[BR_library][2]
     local r = BR_kh.fetchCards folderId
     if r[1] == #unauthorized do (
@@ -169,16 +182,18 @@ fn BR_loadLibrary = (
         return false
     )
     BR_items = r[2]
+    BR_cache[BR_library] = #(BR_items, undefined) -- thumbnails are (re)built by fillList
     true
 )
 
 -- ============================
 -- ROLLOUT: Main UI
 -- ============================
-rollout BR_mainRollout "Physicl Backgrounder v2.1" width:680 height:590
+rollout BR_mainRollout "Physicl Asset Browser v2.2" width:680 height:590
 (
-    label lblLibrary "Library:" pos:[20,12]
-    dropdownList ddlLibrary "" pos:[70,8] width:200
+    -- Library tabs; one per entry in BR_kh.libraries
+    checkbutton tabLib1 "BACKPLATES" pos:[20,6] width:100 height:26
+    checkbutton tabLib2 "DECALS" pos:[122,6] width:100 height:26
     group "Knowledge Hub Library" (
         dotNetControl lvBackgrounds "System.Windows.Forms.ListView" width:640 height:450 align:#center
     )
@@ -215,6 +230,20 @@ rollout BR_mainRollout "Physicl Backgrounder v2.1" width:680 height:590
 
     fn fillList = (
         lvBackgrounds.Items.Clear()
+        local cached = BR_cache[BR_library]
+        if cached != undefined and cached[2] != undefined do (
+            -- Already built: just show it
+            lvBackgrounds.BeginUpdate()
+            lvBackgrounds.LargeImageList = cached[2]
+            for i = 1 to BR_items.count do (
+                local lvi = dotNetObject "System.Windows.Forms.ListViewItem" BR_items[i][1]
+                lvi.ImageIndex = i - 1
+                lvBackgrounds.Items.Add lvi
+            )
+            lvBackgrounds.EndUpdate()
+            lblStatus.text = (BR_items.count as string) + " items"
+            return ok
+        )
         local imgList = dotNetObject "System.Windows.Forms.ImageList"
         imgList.ImageSize = dotNetObject "System.Drawing.Size" 160 90 -- 16:9 thumbnails
         imgList.ColorDepth = (dotNetClass "System.Windows.Forms.ColorDepth").Depth32Bit
@@ -236,7 +265,25 @@ rollout BR_mainRollout "Physicl Backgrounder v2.1" width:680 height:590
         )
         lvBackgrounds.EndUpdate()
         progressEnd()
+        -- Keep it only if every thumbnail was added (not cancelled)
+        if cached != undefined and imgList.Images.Count == BR_items.count do cached[2] = imgList
         lblStatus.text = (BR_items.count as string) + " items"
+    )
+
+    fn showTab i = (
+        tabLib1.checked = (i == 1)
+        tabLib2.checked = (i == 2)
+    )
+
+    fn switchLibrary i = (
+        showTab i -- clicking the active tab keeps it pressed
+        if i == BR_library do return ok
+        local prev = BR_library
+        BR_library = i
+        if BR_loadLibrary() then fillList() else (
+            BR_library = prev
+            showTab prev
+        )
     )
 
     fn importSelected = (
@@ -256,25 +303,19 @@ rollout BR_mainRollout "Physicl Backgrounder v2.1" width:680 height:590
         lvBackgrounds.BackColor = drawingColor.FromArgb 40 40 40
         lvBackgrounds.ForeColor = drawingColor.FromArgb 220 220 220
 
-        ddlLibrary.items = for l in BR_kh.libraries collect l[1]
-        ddlLibrary.selection = BR_library
+        showTab BR_library
         fillList()
     )
 
-    on ddlLibrary selected i do (
-        local prev = BR_library
-        BR_library = i
-        if BR_loadLibrary() then fillList() else (
-            BR_library = prev
-            ddlLibrary.selection = prev
-        )
-    )
-    on btnRefresh pressed do (if BR_loadLibrary() do fillList())
+    on tabLib1 changed st do switchLibrary 1
+    on tabLib2 changed st do switchLibrary 2
+    on btnRefresh pressed do (if BR_loadLibrary force:true do fillList())
     on btnImport pressed do importSelected()
     on lvBackgrounds DoubleClick s a do importSelected()
     on btnLogout pressed do (
         BR_kh.logout()
         BR_items = #()
+        BR_cache = #()
         destroyDialog BR_mainRollout
     )
 )

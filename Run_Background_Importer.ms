@@ -1,11 +1,11 @@
--- Physicl Background Importer Installer
--- Automatic installation of Background Importer script
+-- Physicl Asset Browser Installer
+-- Automatic installation of Physicl Asset Browser
 
 (
     -- Define installation paths
     local userMacroDir = getDir #userMacros
     local sourceDir = getFilenamePath (getThisScriptFilename())
-    local version = "v2.1"
+    local version = "v2.2"
     
     -- Function to copy files (similar to Bulb Fixer)
     fn installFile sourcePath targetPath = 
@@ -59,7 +59,7 @@
     )
     
     -- Start installation
-    format "\n=== PHYSICL BACKGROUND IMPORTER % INSTALLER ===\n" version
+    format "\n=== PHYSICL ASSET BROWSER % INSTALLER ===\n" version
     format "Starting installation...\n\n"
     
     local installSuccess = true
@@ -95,7 +95,7 @@
         format "\n=== INSTALLATION COMPLETED SUCCESSFULLY ===\n"
         format "Total files installed: %\n" installedCount
         
-        messageBox ("Physicl Background Importer " + version + " successfully installed!\n\n" + \
+        messageBox ("Physicl Asset Browser " + version + " successfully installed!\n\n" + \
                    "Script available in:\n" + \
                    "Customize → Customize User Interface → Toolbars\n" + \
                    "Category: Physicl\n\n" + \
@@ -105,7 +105,7 @@
     else
     (
         format "\n=== INSTALLATION ERROR ===\n"
-        messageBox ("Error installing Physicl Background Importer " + version + "\n\n" + \
+        messageBox ("Error installing Physicl Asset Browser " + version + "\n\n" + \
                    "Check MAXScript Listener (F11) for details.") \
                    title:"Installation Error" beep:true
     )
