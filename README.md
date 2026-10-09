@@ -1,5 +1,9 @@
 # Physicl Asset Browser (Backrounder)
 
+> **Moved:** this tool continues as **Physicl Hub Browser** in its own repository,
+> [awark10/physicl-hub-browser](https://github.com/awark10/physicl-hub-browser) (v1.0 = this repo's v2.2).
+> This repository is kept as the Backrounder archive.
+
 A 3ds Max 2022 plugin that shows the **Knowledge Hub** (kh-physicl.com) backplate library as a
 browsable gallery inside Max. Sign in with your Hub account, pick a backdrop from the thumbnail
 grid, click **IMPORT SELECTED**, and it's downloaded, merged into the current scene, and its
